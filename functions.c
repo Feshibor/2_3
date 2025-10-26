@@ -20,18 +20,46 @@ static void int_to_roman(int value, char *buffer) {
 }
 
 static void int_to_base(int value, int base, char *buffer, int uppercase) {
-    if (base < 2 || base > 36) base = 10;
+    if (base < 2 || base > 36) {
+        base = 10;
+    }
+
     char tmp[65];
-    int i = 0, neg = 0;
-    if (value < 0 && base == 10) { neg = 1; value = -value; }
+    int i = 0;
+    int neg = 0;
+
+    if (value < 0 && base == 10) {
+        neg = 1;
+        value = -value;
+    }
+
     do {
         int d = value % base;
-        tmp[i++] = (d < 10) ? ('0' + d) : (uppercase ? 'A' + d - 10 : 'a' + d - 10);
+        char c;
+        if (d < 10) {
+            c = '0' + d;
+        } else {
+            if (uppercase) {
+                c = 'A' + d - 10;
+            } else {
+                c = 'a' + d - 10;
+            }
+        }
+        tmp[i] = c;
+        i++;
         value /= base;
     } while (value);
+
     int k = 0;
-    if (neg) buffer[k++] = '-';
-    while (i--) buffer[k++] = tmp[i];
+    if (neg) {
+        buffer[k] = '-';
+        k++;
+    }
+    while (i > 0) {
+        i--;
+        buffer[k] = tmp[i];
+        k++;
+    }
     buffer[k] = '\0';
 }
 
@@ -45,14 +73,25 @@ static void int_to_zeckendorf(unsigned int n, char *buffer) {
 
     buffer[0] = '\0';
     for (int i = count - 2; i >= 0; i--) {
-        if (fib[i] <= n) { strcat(buffer, "1"); n -= fib[i]; }
-        else strcat(buffer, "0");
+        if (fib[i] <= n) {
+            strcat(buffer, "1");
+            n -= fib[i];
+        } else {
+            strcat(buffer, "0");
+        }
     }
     strcat(buffer, "1");
 }
 
 static void byte_to_bin(unsigned char byte, char *out) {
-    for (int i = 7; i >= 0; i--) *out++ = (byte & (1 << i)) ? '1' : '0';
+    for (int i = 7; i >= 0; i--) {
+        if (byte & (1 << i)) {
+            *out = '1';
+        } else {
+            *out = '0';
+        }
+        out++;
+    }
     *out = '\0';
 }
 
@@ -63,15 +102,27 @@ static void memory_dump(const void *data, size_t size, char *out) {
     for (size_t i = 0; i < size; i++) {
         byte_to_bin(p[i], b);
         strcat(out, b);
-        if (i != size - 1) strcat(out, " ");
+        if (i != size - 1) {
+            strcat(out, " ");
+        }
     }
 }
 
 static int str_to_int_base(const char *s, int base, int uppercase) {
-    if (base < 2 || base > 36) base = 10;
+    if (base < 2 || base > 36) {
+        base = 10;
+    }
     char tmp[65];
     int i = 0;
-    while (*s) tmp[i++] = uppercase ? toupper(*s) : tolower(*s), s++;
+    while (*s) {
+        if (uppercase) {
+            tmp[i] = toupper(*s);
+        } else {
+            tmp[i] = tolower(*s);
+        }
+        i++;
+        s++;
+    }
     tmp[i] = '\0';
     return (int)strtol(tmp, NULL, base);
 }
@@ -80,7 +131,11 @@ static int voversprintf(char *str, const char *format, va_list args) {
     int written = 0;
     for (const char *p = format; *p; p++) {
         if (*p == '%' && *(p + 1)) {
-            if (*(p + 1) == '%') { str[written++] = '%'; p++; continue; }
+            if (*(p + 1) == '%') {
+                str[written++] = '%';
+                p++;
+                continue;
+            }
             p++;
             if (*p == 'R' && *(p + 1) == 'o') {
                 p++;
@@ -95,7 +150,12 @@ static int voversprintf(char *str, const char *format, va_list args) {
                 int_to_zeckendorf(v, buf);
                 written += sprintf(str + written, "%s", buf);
             } else if (*p == 'C' && (*(p + 1) == 'v' || *(p + 1) == 'V')) {
-                int uppercase = (*(p + 1) == 'V');
+                int uppercase;
+                if (*(p + 1) == 'V') {
+                    uppercase = 1;
+                } else {
+                    uppercase = 0;
+                }
                 p++;
                 int val = va_arg(args, int);
                 int base = va_arg(args, int);
@@ -105,11 +165,27 @@ static int voversprintf(char *str, const char *format, va_list args) {
             } else if (*p == 'm' && *(p + 1)) {
                 p++;
                 char buf[256];
-                if (*p == 'i') { int v = va_arg(args, int); memory_dump(&v, sizeof(int), buf); written += sprintf(str + written, "%s", buf);}
-                else if (*p == 'u') { unsigned v = va_arg(args, unsigned); memory_dump(&v, sizeof(unsigned), buf); written += sprintf(str + written, "%s", buf);}
-                else if (*p == 'f') { float v = (float)va_arg(args, double); memory_dump(&v, sizeof(float), buf); written += sprintf(str + written, "%s", buf);}
-                else if (*p == 'd') { double v = va_arg(args, double); memory_dump(&v, sizeof(double), buf); written += sprintf(str + written, "%s", buf);}
-                else { str[written++] = '%'; str[written++] = 'm'; str[written++] = *p; }
+                if (*p == 'i') {
+                    int v = va_arg(args, int);
+                    memory_dump(&v, sizeof(int), buf);
+                    written += sprintf(str + written, "%s", buf);
+                } else if (*p == 'u') {
+                    unsigned v = va_arg(args, unsigned);
+                    memory_dump(&v, sizeof(unsigned), buf);
+                    written += sprintf(str + written, "%s", buf);
+                } else if (*p == 'f') {
+                    float v = (float)va_arg(args, double);
+                    memory_dump(&v, sizeof(float), buf);
+                    written += sprintf(str + written, "%s", buf);
+                } else if (*p == 'd') {
+                    double v = va_arg(args, double);
+                    memory_dump(&v, sizeof(double), buf);
+                    written += sprintf(str + written, "%s", buf);
+                } else {
+                    str[written++] = '%';
+                    str[written++] = 'm';
+                    str[written++] = *p;
+                }
             } else if (*p == 't' && *(p + 1) == 'o') {
                 p++;
                 const char *s = va_arg(args, const char*);
@@ -135,7 +211,9 @@ static int voversprintf(char *str, const char *format, va_list args) {
                 str[written++] = '%';
                 str[written++] = *p;
             }
-        } else str[written++] = *p;
+        } else {
+            str[written++] = *p;
+        }
     }
     str[written] = '\0';
     return written;
