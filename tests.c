@@ -25,7 +25,6 @@ void test_memory_dump() {
     double d = -2.71828;
 
     oversprintf(buf, "%mi %mu %mf %md", x, y, f, d);
-    // Можно проверять содержимое вручную, т.к. дамп зависит от платформы
     printf("Memory dump test output:\n%s\n", buf);
 }
 

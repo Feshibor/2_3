@@ -6,4 +6,4 @@
 int oversprintf(char *str, const char *format, ...);
 int overfprintf(FILE *f, const char *format, ...);
 
-#endif // FUNCTIONS_H
+#endif 
